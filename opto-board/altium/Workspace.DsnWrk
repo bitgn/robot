@@ -1,0 +1,6 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=SecondLib\SecondLib.LibPkg
+[Project2]
+ProjectPath=OptoBoard\OptoBoard.PrjPcb
