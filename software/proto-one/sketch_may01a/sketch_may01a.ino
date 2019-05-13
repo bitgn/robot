@@ -1,8 +1,3 @@
-/*     Simple Stepper Motor Control Exaple Code
- *      
- *  by Dejan Nedelkovski, www.HowToMechatronics.com
- *  
- */
 // defines pins numbers
 const int stepPin = 3; 
 const int dirPin = 4; 
@@ -12,62 +7,113 @@ int v1;
 
 
 
-const int buffer_size = 5;
-int v1_buf[buffer_size];
-int v0_buf[buffer_size];
+const int buffer_size = 600;
+int buffer_pos;
 
-byte buffer_pos;
+byte v1_buf[buffer_size];
+byte v0_buf[buffer_size];
 
+void reset(){
+  buffer_pos = 0;
+}
 
 void mem(int v0, int v1) {
-  buffer_pos += 1;
   if (buffer_pos >= buffer_size) {
-    buffer_pos = 0;
+    return;
   }
   
   v0_buf[buffer_pos] = v0;
   v1_buf[buffer_pos] = v1; 
+  buffer_pos += 1;
 }
 
 
-int sum_v0() {
-  int i;
-  int total = 0;
-  for (i = 0; i < buffer_size; i++) {    
-      total += v0_buf[i];    
+
+void pureRead(int wait) {
+
+  unsigned long start = micros();
+  unsigned long current = 0;
+  
+  unsigned long delta;
+
+  int old0 = v0;
+  int old1 = v1;
+
+  int count0 = 0;
+  int value0 = 0;
+
+  int count1 = 0;
+  int value1 = 0;
+
+  int i = 0;
+
+
+  do {
+
+    
+
+    if (i%2 == 0) {
+      // A0
+      int v = analogRead(A0);
+      int d = abs(v - old0);
+
+      if (d < 15) {
+        value0 += v;
+        count0 += 1;
+      }  
+    } else {
+      // A1;
+      // A0
+      int v = analogRead(A1);
+      int d = abs(v - old1);
+
+      if (d < 15) {
+        value1 += v;
+        count1 += 1;
+      } 
+    }
+    i++;
+     current = micros();
+    delta = current - start;
+  }  while (delta < (wait-50));
+
+  if (count0 > 0) {
+    v0 = value0/count0;
+  } else {
+    v0 = old0;
   }
-  return total;
-}
-int sum_v1() {
-  int i;
-  int total = 0;
-  for (i = 0; i < buffer_size; i++) {    
-      total += v1_buf[i];    
+  
+  if (count1 > 1) {
+    v1 = value1/count1;
+  } else {
+    v1 = old1;
   }
-  return total;
-}
 
+ 
 
-
-
-
-bool last_v0;
-bool last_v1;
-
-int pos;
+  delayMicroseconds(wait-delta); 
+ 
+} 
  
 void setup() {
   // Sets the two pins as Outputs
   pinMode(stepPin,OUTPUT); 
   pinMode(dirPin,OUTPUT);
 
-  analogReference(INTERNAL);
+  
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
 
-  Serial.begin(115200);
+  analogReference(INTERNAL);
 
-  pos = 0;
+   analogRead (A0);
+   analogRead (A1);
+  Serial.begin(115200);
+  Serial.println ();
+
+  ADCSRA &= ~(bit (ADPS0) | bit (ADPS1) | bit (ADPS2)); // clear prescaler bits
+  ADCSRA |= bit (ADPS2);                               //  16 
+
 }
 
 
@@ -79,105 +125,64 @@ void setup() {
  */
 
 
+
 void loop() {
 
 
-  unsigned long time;
-  unsigned long delta;
+
+  for (int dir = 0; dir < 200; dir ++) {
+
+    
+
+    if (dir % 2 == 0) {
+        digitalWrite(dirPin,LOW); //Changes the rotations direction
+    } else {
+      digitalWrite(dirPin,HIGH);
+    }
+
+    
   
-  digitalWrite(dirPin,HIGH); // Enables the motor to move in a particular direction
+   // Enables the motor to move in a particular direction
   // Makes 200 pulses for making one full cycle rotation
-  for(int x = 0; x < 20000; x++) {
+  for(int x = 0; x < buffer_size/2; x++) {
     digitalWrite(stepPin,HIGH); 
 
-    time = micros();     
+    pureRead(500);
+ 
 
-    v0 = analogRead(A0); // green
-    v1 = analogRead(A1); // red  
-
-    mem(v0, v1);
-
-    int v1_tot = sum_v1() / buffer_size;
-    int v0_tot = sum_v0() / buffer_size;
-
-    bool v1_high = v1 > 20;
-    bool v0_high = v0 > 20;
+    mem(v0,v1);
 
   
-     int old_pos;
-  old_pos = pos;
-  // V0 low to high transition
-  if (last_v0 == false && v0_high == true) {
-    if (v1_high) {
-      pos += 1;
-    } else {
-      pos -= 1;
+
+    
+    digitalWrite(stepPin,LOW);
+  
+
+    pureRead(500);
+
+    
+    mem(v0,v1);
+    
+  
+
+    
+  }
+
+  delay (100);
+
+    for (int i = 0; i < buffer_pos; i++) {
+      Serial.println(String("") + v0_buf[i] + " " + v1_buf[i]);
     }
+
+    reset();
+  delay (500);
+
+
     //
-  }
-  // V0 high to low transition
-  if (last_v0 == true && v0_high == false) {
-    if (v1_high) {
-      pos -= 1;
-    } else {
-      pos += 1;
-    }
+     // 
+  
   }
 
-
-  
-  if (last_v1 == false && v1_high == true) {
-    if (v0_high) {
-      pos -= 1;
-    } else {
-      pos += 1;
-    }
-  }
-
-
-  
-  if (last_v1 == true && v1_high == false) {
-    if (v0_high) {
-      pos += 1;
-    } else {
-      pos -= 1;
-    }
-  }
-  
-  
   
 
-
-    delta = micros() - time;
-    
-    
-
-    delayMicroseconds(500-delta); // 0.5 ms
-
-    
-    digitalWrite(stepPin,LOW);
-    time = micros();     
-
-    
-    Serial.println(String("") + v0_tot + " " + v1_tot + " " + pos);
-    delta = micros() - time; 
-    delayMicroseconds(500-delta); // 0.5 ms 
-  
-  
-  last_v0 = v0_high;
-  last_v1 = v1_high;
-
-    
-  }
-  delay(1000); // One second delay
-  
-  digitalWrite(dirPin,LOW); //Changes the rotations direction
-  // Makes 400 pulses for making two full cycle rotation
-  for(int x = 0; x < 400; x++) {
-    digitalWrite(stepPin,HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepPin,LOW);
-    delayMicroseconds(500);
-  }
-  delay(1000);
 }
