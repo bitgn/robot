@@ -31,16 +31,17 @@ def receive():
                         v.append(b)
                         continue
 
+                    print(v)
+                    
 
                     if len(v) == 4:
-
-                        v0 = v[0] + v[1]*256
-                        v1 = v[2] + v[3]*256
+                        v0 = v[0] + (v[1] << 7)
+                        v1 = v[2] + (v[3] << 7)
 
 
                         buf.appendleft([v0,v1])
 
-                        while len(buf) > 4000:
+                        while len(buf) > 2000:
                             buf.pop()
 
 

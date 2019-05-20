@@ -57,10 +57,10 @@ void pureRead() {
 
 
   Serial.write(255);
-  Serial.write(lowByte(v0));
-    Serial.write(highByte(v0));
-  Serial.write(lowByte(v1));
-  Serial.write(highByte(v1));
+  Serial.write(v0 & 127);
+  Serial.write((v0 >> 7) & 127);
+  Serial.write(v1 & 127);
+  Serial.write((v1 >> 7) & 127);
   //Serial.write(Serial.availableForWrite());
 
  
