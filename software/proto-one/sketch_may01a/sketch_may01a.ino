@@ -57,8 +57,10 @@ void pureRead() {
 
 
   Serial.write(255);
-  Serial.write(v0);
-  Serial.write(v1);
+  Serial.write(lowByte(v0));
+    Serial.write(highByte(v0));
+  Serial.write(lowByte(v1));
+  Serial.write(highByte(v1));
   //Serial.write(Serial.availableForWrite());
 
  
@@ -95,42 +97,31 @@ void setup() {
  * 
  */
 
-
-
-void loop() {
-
-    digitalWrite(dirPin,HIGH);
-
-
-    
-  
-  
-  for(int x = 0; x < 10000; x++) {
+void move(int dir, int steps) {
+   digitalWrite(dirPin,dir);
+    for(int x = 0; x < steps; x++) {
     digitalWrite(stepPin,HIGH); 
 
     unsigned long start = micros();
     pureRead();
     unsigned long finish = micros();    
     delayMicroseconds(500 - (finish - start)); 
-
- 
-  
-
-    
     digitalWrite(stepPin,LOW);
-  
-
     start = micros();
     pureRead();
     finish = micros();    
     delayMicroseconds(500 - (finish - start)); 
+  }
+}
+
+void loop() {
+
+    move(HIGH, 1000);
+    move(LOW, 1000);
 
 
     
   
-
-    
-  }
 
   
 

@@ -32,10 +32,15 @@ def receive():
                         continue
 
 
-                    if len(v) == 2:
-                        buf.appendleft(v[0:2])
+                    if len(v) == 4:
 
-                        while len(buf) > 1000:
+                        v0 = v[0] + v[1]*256
+                        v1 = v[2] + v[3]*256
+
+
+                        buf.appendleft([v0,v1])
+
+                        while len(buf) > 4000:
                             buf.pop()
 
 
