@@ -2,39 +2,10 @@
 const int stepPin = 3; 
 const int dirPin = 4; 
 
-int v0;
-int v1;
+int v0 = -1;
+int v1 = -1;
 
-
-
-const int buffer_size = 600;
-int buffer_pos;
-
-byte v1_buf[buffer_size];
-byte v0_buf[buffer_size];
-
-void reset(){
-  buffer_pos = 0;
-}
-
-void mem(int v0, int v1) {
-  if (buffer_pos >= buffer_size) {
-    return;
-  }
-  
-  v0_buf[buffer_pos] = v0;
-  v1_buf[buffer_pos] = v1; 
-  buffer_pos += 1;
-}
-
-
-
-void pureRead(int wait) {
-
-  unsigned long start = micros();
-  unsigned long current = 0;
-  
-  unsigned long delta;
+void pureRead() {
 
   int old0 = v0;
   int old1 = v1;
@@ -47,17 +18,14 @@ void pureRead(int wait) {
 
   int i = 0;
 
-
-  do {
-
-    
+  for (int i = 0; i< 8; i++) {
 
     if (i%2 == 0) {
       // A0
       int v = analogRead(A0);
       int d = abs(v - old0);
 
-      if (d < 15) {
+      if (d < 15 || old0 < 0) {
         value0 += v;
         count0 += 1;
       }  
@@ -67,15 +35,13 @@ void pureRead(int wait) {
       int v = analogRead(A1);
       int d = abs(v - old1);
 
-      if (d < 15) {
+      if (d < 15 || old1 < 0) {
         value1 += v;
         count1 += 1;
       } 
     }
-    i++;
-     current = micros();
-    delta = current - start;
-  }  while (delta < (wait-50));
+  
+  }  
 
   if (count0 > 0) {
     v0 = value0/count0;
@@ -89,9 +55,14 @@ void pureRead(int wait) {
     v1 = old1;
   }
 
+
+  Serial.write(255);
+  Serial.write(v0);
+  Serial.write(v1);
+  //Serial.write(Serial.availableForWrite());
+
  
 
-  delayMicroseconds(wait-delta); 
  
 } 
  
@@ -142,45 +113,34 @@ void loop() {
 
     
   
-   // Enables the motor to move in a particular direction
-  // Makes 200 pulses for making one full cycle rotation
-  for(int x = 0; x < buffer_size/2; x++) {
+  
+  for(int x = 0; x < 10000; x++) {
     digitalWrite(stepPin,HIGH); 
 
-    pureRead(500);
+    unsigned long start = micros();
+    pureRead();
+    unsigned long finish = micros();    
+    delayMicroseconds(500 - (finish - start)); 
+
  
-
-    mem(v0,v1);
-
   
 
     
     digitalWrite(stepPin,LOW);
   
 
-    pureRead(500);
+    start = micros();
+    pureRead();
+    finish = micros();    
+    delayMicroseconds(500 - (finish - start)); 
 
-    
-    mem(v0,v1);
+
     
   
 
     
   }
 
-  delay (100);
-
-    for (int i = 0; i < buffer_pos; i++) {
-      Serial.println(String("") + v0_buf[i] + " " + v1_buf[i]);
-    }
-
-    reset();
-  delay (500);
-
-
-    //
-     // 
-  
   }
 
   
