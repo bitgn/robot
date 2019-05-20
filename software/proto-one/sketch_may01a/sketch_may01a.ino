@@ -99,17 +99,8 @@ void setup() {
 
 void loop() {
 
+    digitalWrite(dirPin,HIGH);
 
-
-  for (int dir = 0; dir < 200; dir ++) {
-
-    
-
-    if (dir % 2 == 0) {
-        digitalWrite(dirPin,LOW); //Changes the rotations direction
-    } else {
-      digitalWrite(dirPin,HIGH);
-    }
 
     
   
@@ -141,7 +132,7 @@ void loop() {
     
   }
 
-  }
+  
 
   
 

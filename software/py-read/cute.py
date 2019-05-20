@@ -13,7 +13,7 @@ buf = deque()
 def receive():
     ser = None
     try:
-        ser = serial.Serial('/dev/tty.usbmodem14101',115200,timeout=0.1)
+        ser = serial.Serial('/dev/tty.usbmodem14101',115200,timeout=1)
 
         v = []
 
@@ -21,21 +21,25 @@ def receive():
             try:
                 count = ser.inWaiting()
                 if count == 0:
-                    time.sleep(0.001)
+                    time.sleep(0.01)
                     continue
                 bs = ser.read(count)
 
+
                 for b in bs:
-                    if b == 255:
-                        if len(v) == 3:
-                            buf.appendleft(v[0:2])
-
-                            while len(buf) > 10000:
-                                buf.pop()
-
-                        v.clear()
-                    else:
+                    if b != 255:
                         v.append(b)
+                        continue
+
+
+                    if len(v) == 2:
+                        buf.appendleft(v[0:2])
+
+                        while len(buf) > 1000:
+                            buf.pop()
+
+
+                    v.clear()
             except Exception as e:
                 print(e)
                 pass
