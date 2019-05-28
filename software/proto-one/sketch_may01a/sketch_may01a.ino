@@ -116,12 +116,10 @@ void move(int dir, int steps) {
 
 void loop() {
 
+
+  for (int i = 0; i<=10000; i++) {
     move(HIGH, 1000);
-    move(LOW, 1000);
-
-
-    
-  
+   }  
 
   
 
